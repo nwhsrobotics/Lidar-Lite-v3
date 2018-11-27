@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
- * An example subsystem.  You can replace me with your own Subsystem.
+ * A Subsystem to read a Garmin Lidar Lite V3
  */
 public class LidarLiteV3Subsystem extends Subsystem {
 
@@ -45,7 +45,7 @@ public class LidarLiteV3Subsystem extends Subsystem {
   private final byte m_buffer[] = new byte[2];
 
   boolean m_enabled = false;
-  /* boolean m_measInProgress = false; */
+  boolean m_failed = false;
   int m_distCm;
   int m_cycles = 0;
 
@@ -53,38 +53,26 @@ public class LidarLiteV3Subsystem extends Subsystem {
 
   @Override
   public void initDefaultCommand() {
-    // Set the default command for a subsystem here.
-    // setDefaultCommand(new MySpecialCommand());
+    // None
   }
 
   @Override
   public void periodic() {
     if (m_enabled) {
-      /* if (m_measInProgress) { */
         if (!isBusy()) {
           // Read results of the measurement
           readMeas();
-          /* m_measInProgress = false; */
 
           // Immediately start another measurement.
           startMeas();
-          /* m_measInProgress = true; */
         }
-      /* } */
-      /* obsolete
-      else {
-        if (!isBusy()) {
-          startMeas();
-          m_measInProgress = true;
-        }
-      }
-      */
     }
     else {
       m_distCm = 0;
     }
 
     SmartDashboard.putNumber("lidar_cm", m_distCm);
+    SmartDashboard.putBoolean("lidar_failed", m_failed);
     SmartDashboard.putBoolean("lidar_en", m_enabled);
     SmartDashboard.putNumber("lidar_cycles", m_cycles);
   }
@@ -96,6 +84,7 @@ public class LidarLiteV3Subsystem extends Subsystem {
   public void enable(boolean enable) {
     if (enable != m_enabled) {
       m_enabled = enable;
+      m_failed = false;
 
       if (m_enabled) {
         configLidar();
@@ -110,6 +99,10 @@ public class LidarLiteV3Subsystem extends Subsystem {
     return m_enabled;
   }
 
+  public boolean isFailed() {
+    return m_failed;
+  }
+
   public double getDistanceCm() {
     // return last read distance
     return m_distCm;
@@ -117,8 +110,23 @@ public class LidarLiteV3Subsystem extends Subsystem {
 
   private void configLidar() {
     // Set up ACQ_CONFIG register to use REF_COUNT instead of default value.
-    m_i2c.writeBulk(WR_SET_REF_COUNT);
-    m_i2c.writeBulk(WR_SET_ACQ_CONFIG);
+    boolean aborted;
+    
+    aborted = m_i2c.writeBulk(WR_SET_REF_COUNT);
+    if (aborted) {
+      m_failed = true;
+    }
+
+    aborted = m_i2c.writeBulk(WR_SET_ACQ_CONFIG);
+    if (aborted) {
+      m_failed = true;
+    } 
+
+    if (m_failed) {
+      // TODO : This was all working, then it stopped and now this happens.
+      // Is 5V power supply up to it?  Try powering from VRM instead of RoboRIO?
+            System.out.println("Lidar config failed.");
+    }
   }
 
 
