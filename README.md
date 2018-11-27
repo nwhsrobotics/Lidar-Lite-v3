@@ -16,10 +16,10 @@ the Lidar unit may be damaged now somehow.
 
 ## Hookup
 
-Connect the black wire to ground.
-Connect the red wire to 5V (requires 500mA peak and a 1000uF cap)
-Connect the green wire to SCL
-Connect the blue wire to SDA
+* Connect the black wire to ground.
+* Connect the red wire to 5V (requires 500mA peak and a 1000uF cap)
+* Connect the green wire to SCL
+* Connect the blue wire to SDA
 
 ## Running the Example code
 
@@ -39,6 +39,9 @@ The lidar_en state will change to true.  The lidar is enabled now.
 The lidar_cycles variable will begin incrementing with each
 measurement taken and the lidar_cm indicator will show the distance,
 in cm, from the lidar to the first surface the beam hits.
+
+If the lidar_failed flag goes to true, this means an i2c operation
+failed when configuring the lidar.
 
 ## Using the Example Code
 
